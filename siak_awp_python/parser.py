@@ -108,7 +108,7 @@ def _parse_box(box: BeautifulSoup):
             current_curriculum = re_match.group(5)
             current_sks = int(re_match.group(3))
 
-            result[current_subject_id] = []
+            result[current_subject_name] = []
         else:
             children = list(class_row.select("td"))
             if len(children) == 4:
@@ -117,7 +117,7 @@ def _parse_box(box: BeautifulSoup):
             name = children[1].text.strip()
             teachers = list(children[6].stripped_strings)
 
-            result[current_subject_id].append(
+            result[current_subject_name].append(
                 {
                     "subject_id": current_subject_id,
                     "curriculum_id": current_curriculum,
