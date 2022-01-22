@@ -10,10 +10,15 @@ httpx = "^0.21.3"
 beautifulsoup4 = "^4.10.0"
 lxml = "^4.7.1"
 cchardet = "^2.1.7"
+PyYAML = "^6.0"
+rich = "^11.0.0"
 
 [tool.poetry.dev-dependencies]
 pytest = "^5.2"
 black = {version = "^21.12b0", allow-prereleases = true}
+flake8 = "^4.0.1"
+mypy = "^0.931"
+types-PyYAML = "^6.0.3"
 
 [build-system]
 requires = ["poetry-core>=1.0.0"]
