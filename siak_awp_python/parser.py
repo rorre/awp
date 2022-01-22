@@ -4,7 +4,9 @@ from typing import Any, Dict, Iterable, List, TypedDict
 import re
 from bs4 import BeautifulSoup
 
-HEADER_RE = re.compile(r"(.+) - (.+) \((\d{1}) SKS, Term (\d{1})\); Kurikulum (.+)")
+HEADER_RE = re.compile(
+    r"([A-Z]{4}\d{6}) - (.+) \((\d{1}) SKS, Term (\d{1})\); Kurikulum (.+)"
+)
 
 
 class ParserException(BaseException):
@@ -35,7 +37,7 @@ class IRSClass(BaseParser):
     capacity: int
     registrant: int
     term: int
-    teachers: str
+    teachers: List[str]
 
     def parse(soup: BeautifulSoup) -> Iterable[Any]:
         args = []
@@ -46,12 +48,12 @@ class IRSClass(BaseParser):
         args.append(inp.attrs["name"])  # Subject ID
         args.append(inp.attrs["value"])  # Class ID
 
-        children = list(soup.find_all("td"))
+        children = list(soup.select("td"))
         args.append(children[1].text)  # Name
         args.append(int(children[3].text))  # Capacity
         args.append(int(children[4].text))  # Registrant
         args.append(int(children[5].text))  # Term
-        args.append(children[8].text)  # Teachers
+        args.append(children[8].stripped_strings)  # Teachers
         return args
 
 
@@ -83,50 +85,63 @@ class SubjectClass(TypedDict):
     subject_name: str
     sks: int
     name: str
-    teachers: str
+    teachers: List[str]
+
+
+def _parse_box(box: BeautifulSoup):
+    current_subject_id = ""
+    current_subject_name = ""
+    current_curriculum = ""
+    current_sks = -1
+
+    result: Dict[str, List[SubjectClass]] = {}
+    classes = list(box.select("tr"))
+    for class_row in classes[2:]:
+        is_header = "class" not in class_row.attrs
+        if is_header:
+            re_match = HEADER_RE.match(class_row.text.strip())
+            if not re_match:
+                raise ParserException("Cannot parse header.", box)
+
+            current_subject_id = re_match.group(1)
+            current_subject_name = re_match.group(2)
+            current_curriculum = re_match.group(5)
+            current_sks = int(re_match.group(3))
+
+            result[current_subject_id] = []
+        else:
+            children = list(class_row.select("td"))
+            if len(children) == 4:
+                continue
+
+            name = children[1].text.strip()
+            teachers = list(children[6].stripped_strings)
+
+            result[current_subject_id].append(
+                {
+                    "subject_id": current_subject_id,
+                    "curriculum_id": current_curriculum,
+                    "subject_name": current_subject_name,
+                    "sks": current_sks,
+                    "name": name,
+                    "teachers": teachers,
+                }
+            )
+    return result
 
 
 @dataclass
 class Schedule(BaseParser):
-    classes: Dict[str, List[SubjectClass]]
+    classes: Dict[str, Dict[str, List[SubjectClass]]]
 
     def parse(soup: BeautifulSoup) -> Iterable[Any]:
-        current_subject_id = ""
-        current_subject_name = ""
-        current_curriculum = ""
-        current_sks = -1
-
         subject_dict: Dict[str, List[SubjectClass]] = {}
 
-        classes = list(soup.select_one("table.box").select("tr"))
-        for class_row in classes[2:]:
-            is_header = "class" not in class_row.attrs
-            if is_header:
-                re_match = HEADER_RE.match(class_row.text.strip())
-                if not re_match:
-                    raise ParserException("Cannot parse header.", soup)
+        tags = soup.select_one("#ti_m1").select("h3")
+        boxes = soup.select("table.box")
 
-                current_subject_id = re_match.group(1)
-                current_subject_name = re_match.group(2)
-                current_curriculum = re_match.group(5)
-                current_sks = int(re_match.group(3))
+        for i in range(3):
+            title_strings = list(tags[i].stripped_strings)
+            subject_dict[title_strings[0]] = _parse_box(boxes[i])
 
-                subject_dict[current_subject_id] = []
-            else:
-                children = list(class_row.find_all("td"))
-                if len(children) == 4:
-                    continue
-                name = children[1].text.strip()
-                teachers = children[5].text.strip()
-
-                subject_dict[current_subject_id].append(
-                    {
-                        "subject_id": current_subject_id,
-                        "curriculum_id": current_curriculum,
-                        "subject_name": current_subject_name,
-                        "sks": current_sks,
-                        "name": name,
-                        "teachers": teachers,
-                    }
-                )
         return [subject_dict]
