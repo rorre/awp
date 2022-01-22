@@ -3,8 +3,24 @@ from typing import Dict, List, Union
 import httpx
 from bs4 import BeautifulSoup
 
+from siak_awp_python.parser import IRSEdit, Schedule
+
 BASE_URL = "http://localhost:3000"
 # BASE_URL = 'https://academic.ui.ac.id'
+BASE_HEADERS = {
+    "accept": "text/html,application/xhtml+xml,application/xml;q=0.9,image/avif,image/webp,image/apng,*/*;q=0.8,application/signed-exchange;v=b3;q=0.9",
+    "accept-language": "en-US,en;q=0.9",
+    "cache-control": "max-age=0",
+    "content-type": "application/x-www-form-urlencoded",
+    "sec-ch-ua": '" Not;A Brand";v="99", "Google Chrome";v="97", "Chromium";v="97"',
+    "sec-ch-ua-mobile": "?0",
+    "sec-ch-ua-platform": '"Windows"',
+    "sec-fetch-dest": "document",
+    "sec-fetch-mode": "navigate",
+    "sec-fetch-site": "same-origin",
+    "sec-fetch-user": "?1",
+    "upgrade-insecure-requests": "1",
+}
 
 
 def is_valid_response(response: httpx.Response):
@@ -28,9 +44,18 @@ class SIAKClient:
     TIMEOUT = 5000
 
     def __init__(self):
-        self._client = httpx.AsyncClient(timeout=self.TIMEOUT, follow_redirects=False)
+        self._client = httpx.AsyncClient(
+            timeout=self.TIMEOUT,
+            follow_redirects=False,
+            headers=BASE_HEADERS,
+        )
 
-    async def _request(self, method: str, url: str, data: Union[str, dict] = None):
+    async def _request(
+        self,
+        method: str,
+        url: str,
+        data: Union[str, dict] = None,
+    ) -> httpx.Response:
         futures: List[asyncio.Task] = []
         is_requesting = True
         response: httpx.Response
@@ -43,7 +68,7 @@ class SIAKClient:
 
             if is_valid_response(resp.result()):
                 is_requesting = False
-                response = resp
+                response = resp.result()
 
         while is_requesting:
             task = asyncio.create_task(self._client.request(method, url, data=data))
@@ -66,14 +91,27 @@ class SIAKClient:
         await self._request("GET", f"{BASE_URL}/main/Authentication/ChangeRole")
         return True
 
+    async def get_schedule(self):
+        base_schedule = await self._request("GET", f"{BASE_URL}/main/Schedule/Index")
+        base_soup = BeautifulSoup(base_schedule.text, "lxml")
+        latest = base_soup.select_one("select#period > option").attrs["value"]
+
+        res = await self._request(
+            "GET", f"{BASE_URL}/main/Schedule/Index?period={latest}"
+        )
+        return Schedule.from_html(res.text)
+
     async def get_irs(self):
-        return await self._request("GET", f"${BASE_URL}/main/CoursePlan/CoursePlanEdit")
+        res = await self._request("GET", f"${BASE_URL}/main/CoursePlan/CoursePlanEdit")
+        return IRSEdit.from_html(res.text)
 
     async def post_irs(self, selections: Dict[str, str]):
         if "tokens" not in selections:
-            await self.get_irs()
-            ...
+            irs_page = await self.get_irs()
+            selections["tokens"] = irs_page
 
         await self._request(
-            "POST", f"${BASE_URL}/main/CoursePlan/CoursePlanSave", selections
+            "POST",
+            f"${BASE_URL}/main/CoursePlan/CoursePlanSave",
+            selections,
         )
