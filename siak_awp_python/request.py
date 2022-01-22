@@ -63,7 +63,7 @@ class SIAKClient:
         def _on_request_done(resp: asyncio.Task[httpx.Response]):
             nonlocal is_requesting
             nonlocal response
-            if resp.cancelled():
+            if resp.exception() or resp.cancelled():
                 return
 
             if is_valid_response(resp.result()):
