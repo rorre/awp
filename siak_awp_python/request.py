@@ -68,6 +68,7 @@ class SIAKClient:
 
             if is_valid_response(resp.result()):
                 is_requesting = False
+                [fut.cancel() for fut in futures]
                 response = resp.result()
 
         while is_requesting:
