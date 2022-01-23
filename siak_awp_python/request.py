@@ -23,6 +23,13 @@ BASE_HEADERS = {
 }
 
 
+class SIAKException(BaseException):
+    def __init__(self, message: str, soup: BeautifulSoup):
+        super().__init__(message)
+        self.message = message
+        self.soup = soup
+
+
 def is_valid_response(response: httpx.Response):
     response_text = BeautifulSoup(response.text, "lxml").text.strip()
     if response.status_code == 200:
@@ -111,6 +118,9 @@ class SIAKClient:
 
     async def get_irs(self):
         res = await self._request("GET", f"{BASE_URL}/main/CoursePlan/CoursePlanEdit")
+        soup = BeautifulSoup(res.text, "lxml").select_one("div.info")
+        if soup:
+            raise SIAKException("IRS not yet opened.", soup)
         return IRSEdit.from_html(res.text)
 
     async def post_irs(self, selections: Dict[str, str]):
