@@ -1,5 +1,5 @@
 import asyncio
-from typing import TYPE_CHECKING, Dict, List, Union
+from typing import TYPE_CHECKING, Dict, List
 import httpx
 from bs4 import BeautifulSoup
 
@@ -68,7 +68,7 @@ class SIAKClient:
         self,
         method: str,
         url: str,
-        data: Union[str, dict] = None,
+        data: dict = None,
     ) -> httpx.Response:
         futures: List[asyncio.Task] = []
         is_requesting = True
@@ -89,7 +89,7 @@ class SIAKClient:
                 response = resp.result()
 
         while is_requesting:
-            self._console.log("Requesting")
+            self._console.log("Requesting", method, url)
             task = asyncio.create_task(self._client.request(method, url, data=data))
             task.add_done_callback(_on_request_done)
             futures.append(task)
