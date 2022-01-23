@@ -264,17 +264,18 @@ async def main(config: os.PathLike):
     )
 
 
-parser = argparse.ArgumentParser()
-parser.add_argument(
-    "--init",
-    "-i",
-    default=False,
-    type=bool,
-    action=argparse.BooleanOptionalAction,
-)
-parser.add_argument("--config", "-c", default="config.yaml")
-args = parser.parse_args()
-if args.init:
-    asyncio.run(configure(args.config))
-else:
-    asyncio.run(main(args.config))
+if __name__ == "__main__":
+    parser = argparse.ArgumentParser()
+    parser.add_argument(
+        "--init",
+        "-i",
+        default=False,
+        type=bool,
+        action=argparse.BooleanOptionalAction,
+    )
+    parser.add_argument("--config", "-c", default="config.yaml")
+    args = parser.parse_args()
+    if args.init:
+        asyncio.run(configure(args.config))
+    else:
+        asyncio.run(main(args.config))
