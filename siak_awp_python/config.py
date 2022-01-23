@@ -8,12 +8,10 @@ except ImportError:
     from yaml import Loader, Dumper  # type: ignore
 
 
-class SubjectSelection(TypedDict, total=False):
+class SubjectSelection(TypedDict):
     code: str
     curriculum: str
     preference: List[int]
-
-    # Optional fields
     name: str
 
 
