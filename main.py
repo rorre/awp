@@ -225,7 +225,7 @@ async def main(config: os.PathLike):
                 selected[pref["name"]] = fallback(
                     pref["preference"],
                     subject_classes,
-                    cfg["fallback"],
+                    cfg["fallback"],  # type: ignore
                 )
 
     console.rule("Result")
