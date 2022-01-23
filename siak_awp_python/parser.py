@@ -1,8 +1,10 @@
 from dataclasses import dataclass
 from abc import ABC, abstractstaticmethod
+import itertools
 from typing import Any, Dict, Iterable, List, TypedDict
 import re
 from bs4 import BeautifulSoup
+import sys
 
 HEADER_RE = re.compile(
     r"([A-Z]{4}\d{6}) - (.+) \((\d{1}) SKS, Term (\d{1})\); Kurikulum (.+)"
@@ -49,11 +51,22 @@ class IRSClass(BaseParser):
         args.append(inp.attrs["value"])  # Class ID
 
         children = list(soup.select("td"))
-        args.append(children[1].text)  # Name
-        args.append(int(children[3].text))  # Capacity
-        args.append(int(children[4].text))  # Registrant
-        args.append(int(children[5].text))  # Term
-        args.append(children[8].stripped_strings)  # Teachers
+        args.append(children[1].text.strip())  # Name
+        if len(children) == 7:
+            args.append(sys.maxsize)  # Capacity
+        else:
+            args.append(int(children[3].text.strip()))  # Capacity
+
+        args.append(int(children[4].text.strip()))  # Registrant
+        args.append(int(children[5].text.strip()))  # Term
+
+        if len(children) == 7:
+            args.append([])
+        else:
+            args.append(
+                [t[1:].strip() for t in children[8].stripped_strings]
+            )  # Teachers
+
         return args
 
 
@@ -62,19 +75,30 @@ class IRSEdit(BaseParser):
     token: str
     classes: List[IRSClass]
 
+    @property
+    def classes_by_id(self):
+        return {
+            k: list(g)
+            for k, g in itertools.groupby(self.classes, lambda x: x.subject_id)
+        }
+
+    def get_classes_by_id(self, subject_id: str, curriculum: str):
+        return self.classes_by_id[f"c[{subject_id}_{curriculum}]"]
+
     def parse(soup: BeautifulSoup) -> Iterable[Any]:
-        irs_box = soup.select_one(".box")
+        irs_box = soup.select(".box")
         if not irs_box:
             raise ParserException("Cannot find IRS box.", soup)
 
         classes = []
-        for cls in irs_box.select("tr"):
-            if "alt" in cls.attrs["class"] or "x" in cls.attrs["class"]:
-                classes.append(IRSEdit.parse(cls))
+        for box in irs_box:
+            for cls in box.select("tr"):
+                if "class" in cls.attrs:
+                    classes.append(IRSClass(*IRSClass.parse(cls)))
 
-        token = soup.select_one('input[name="tokens"]')
-        if not token:
-            raise ParserException("Cannot find token.", soup)
+            token = soup.select_one('input[name="tokens"]')
+            if not token:
+                raise ParserException("Cannot find token.", soup)
 
         return [token.attrs["value"], classes]
 
