@@ -167,9 +167,9 @@ class Schedule(BaseParser):
         subject_dict: Dict[str, List[SubjectClass]] = {}
 
         tags = soup.select_one("#ti_m1").select("h3")
-        boxes = soup.select("table.box")
+        boxes = list(soup.select("table.box"))
 
-        for i in range(3):
+        for i in range(len(boxes)):
             title_strings = list(tags[i].stripped_strings)
             subject_dict[title_strings[0]] = _parse_box(boxes[i])
 
