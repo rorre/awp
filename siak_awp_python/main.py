@@ -192,7 +192,7 @@ async def main(config: os.PathLike):
 
             break
         except SIAKException:
-            console.print("IRS not yet opened, logging out and retrying...")
+            console.log("[yellow]IRS not yet opened, logging out and retrying...")
             c.logout()
 
     with console.status("Selecting..."):
