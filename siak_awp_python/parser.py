@@ -86,6 +86,7 @@ class SubjectClass(TypedDict):
     sks: int
     name: str
     teachers: List[str]
+    idx: int
 
 
 def _parse_box(box: BeautifulSoup):
@@ -93,6 +94,7 @@ def _parse_box(box: BeautifulSoup):
     current_subject_name = ""
     current_curriculum = ""
     current_sks = -1
+    idx = 0
 
     result: Dict[str, List[SubjectClass]] = {}
     classes = list(box.select("tr"))
@@ -109,13 +111,14 @@ def _parse_box(box: BeautifulSoup):
             current_sks = int(re_match.group(3))
 
             result[current_subject_name] = []
+            idx = 0
         else:
             children = list(class_row.select("td"))
             if len(children) == 4:
                 continue
 
             name = children[1].text.strip()
-            teachers = list(children[6].stripped_strings)
+            teachers = [t[1:].strip() for t in children[6].stripped_strings]
 
             result[current_subject_name].append(
                 {
@@ -125,8 +128,10 @@ def _parse_box(box: BeautifulSoup):
                     "sks": current_sks,
                     "name": name,
                     "teachers": teachers,
+                    "idx": idx,
                 }
             )
+            idx += 1
     return result
 
 
