@@ -1,5 +1,5 @@
 from os import PathLike
-from typing import List, TypedDict
+from typing import List, Literal, TypedDict
 import yaml
 
 try:
@@ -18,6 +18,7 @@ class SubjectSelection(TypedDict):
 class Config(TypedDict):
     username: str
     password: str
+    fallback: Literal["available", "lowest"]
     selections: List[SubjectSelection]
 
 
