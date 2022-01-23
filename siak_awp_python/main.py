@@ -101,7 +101,7 @@ def fallback(
     return min(preferred_class, key=lambda x: x.registrant)
 
 
-async def configure(config: os.PathLike):
+async def configure(c: SIAKClient, config: os.PathLike):
     if os.path.exists(config):
         console.print("[red bold]This will REPLACE your current config.")
         if not Confirm.ask("Are you sure you want to proceed?", console=console):
@@ -111,7 +111,6 @@ async def configure(config: os.PathLike):
     username = console.input("[b]Username: ")
     password = console.input("[b]Password: ")
 
-    c = SIAKClient(console)
     with console.status("Logging in..."):
         if not await c.login(username, password):
             console.print("[red]Failed to log in!")
@@ -176,12 +175,10 @@ async def configure(config: os.PathLike):
             "selections": selection_to_config(selected),
         },
     )
-    await c._client.aclose()
 
 
-async def main(config: os.PathLike):
+async def main(c: SIAKClient, config: os.PathLike):
     cfg = load_config(config)
-    c = SIAKClient(console)
     while True:
         try:
             with console.status("Logging in..."):
@@ -247,9 +244,8 @@ async def main(config: os.PathLike):
     for cls_data in selected.values():
         post_data[cls_data.subject_id] = cls_data.class_id
 
-    inspect(post_data)
-    # await c.post_irs(post_data)
-    await c._client.aclose()
+    # inspect(post_data)
+    await c.post_irs(post_data)
     console.print("Done!")
 
     console.rule("Verification")
@@ -275,10 +271,16 @@ def cli():
     )
     parser.add_argument("--config", "-c", default="config.yaml")
     args = parser.parse_args()
+
+    async def wrapper(f):
+        c = SIAKClient(console)
+        await f(c, args.config)
+        await c.aclose()
+
     if args.init:
-        asyncio.run(configure(args.config))
+        asyncio.run(wrapper(configure))
     else:
-        asyncio.run(main(args.config))
+        asyncio.run(wrapper(main))
 
 
 if __name__ == "__main__":
