@@ -4,7 +4,7 @@ from typing import Dict, Literal, Tuple, TypeVar, overload, Union, List
 import os
 from siak_awp_python.config import load_config, write_config
 from siak_awp_python.parser import IRSClass, Schedule, SubjectClass
-from siak_awp_python.request import SIAKClient
+from siak_awp_python.request import SIAKClient, SIAKException
 from rich.console import Console
 from rich import inspect
 from siak_awp_python.external.pick import pick
@@ -181,11 +181,18 @@ async def configure(config: os.PathLike):
 async def main(config: os.PathLike):
     cfg = load_config(config)
     c = SIAKClient()
-    with console.status("Logging in..."):
-        await c.login(cfg["username"], cfg["password"])
+    while True:
+        try:
+            with console.status("Logging in..."):
+                await c.login(cfg["username"], cfg["password"])
 
-    with console.status("Fetching IRS page..."):
-        irs = await c.get_irs()
+            with console.status("Fetching IRS page..."):
+                irs = await c.get_irs()
+
+            break
+        except SIAKException:
+            console.print("IRS not yet opened, logging out and retrying...")
+            c.logout()
 
     with console.status("Selecting..."):
         selected: Dict[str, IRSClass] = {}

@@ -94,6 +94,12 @@ class SIAKClient:
 
         return response
 
+    async def aclose(self):
+        await self._client.aclose()
+
+    def logout(self):
+        self._client.cookies.clear()
+
     async def login(self, username: str, password: str):
         await self._request(
             "POST",
