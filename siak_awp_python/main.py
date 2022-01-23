@@ -96,6 +96,10 @@ def fallback(
     if strategy == "available":
         available = list(filter(lambda x: x.capacity > x.registrant, classes))
         if not available:
+            console.log("[red]No classes found with available strategy")
+            console.log(
+                "[red]Falling back to lowest strategy with all possible classes"
+            )
             return fallback(list(range(len(classes))), classes, "lowest")
         return min(available, key=lambda x: x.registrant)
 
