@@ -110,12 +110,13 @@ async def configure(config: os.PathLike):
 
     username = console.input("[b]Username: ")
     password = console.input("[b]Password: ")
+
     c = SIAKClient(console)
     with console.status("Logging in..."):
-        while not await c.login(username, password):
+        if not await c.login(username, password):
             console.print("[red]Failed to log in!")
-            username = console.input("[b]Username: ")
-            password = console.input("[b]Password: ")
+            return
+
     console.print("[green]Logged in.")
 
     with console.status("Fetching schedules..."):
