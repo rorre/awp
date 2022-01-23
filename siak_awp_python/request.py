@@ -63,7 +63,10 @@ class SIAKClient:
         def _on_request_done(resp: asyncio.Task[httpx.Response]):
             nonlocal is_requesting
             nonlocal response
-            if resp.exception() or resp.cancelled():
+            try:
+                if resp.exception() or resp.cancelled():
+                    return
+            except asyncio.CancelledError:
                 return
 
             if is_valid_response(resp.result()):
@@ -77,7 +80,11 @@ class SIAKClient:
             futures.append(task)
             await asyncio.sleep(self.DELAY)
 
-        await asyncio.gather(*futures, return_exceptions=False)
+        try:
+            await asyncio.gather(*futures, return_exceptions=False)
+        except asyncio.CancelledError:
+            pass
+
         return response
 
     async def login(self, username: str, password: str):
@@ -103,7 +110,7 @@ class SIAKClient:
         return Schedule.from_html(res.text)
 
     async def get_irs(self):
-        res = await self._request("GET", f"${BASE_URL}/main/CoursePlan/CoursePlanEdit")
+        res = await self._request("GET", f"{BASE_URL}/main/CoursePlan/CoursePlanEdit")
         return IRSEdit.from_html(res.text)
 
     async def post_irs(self, selections: Dict[str, str]):
@@ -113,6 +120,6 @@ class SIAKClient:
 
         await self._request(
             "POST",
-            f"${BASE_URL}/main/CoursePlan/CoursePlanSave",
+            f"{BASE_URL}/main/CoursePlan/CoursePlanSave",
             selections,
         )
