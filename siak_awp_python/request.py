@@ -1,12 +1,16 @@
 import asyncio
-from typing import Dict, List, Union
+from typing import TYPE_CHECKING, Dict, List, Union
 import httpx
 from bs4 import BeautifulSoup
 
+from rich import inspect
 from siak_awp_python.parser import IRSEdit, Schedule
 
+if TYPE_CHECKING:
+    from rich import Console
+
 BASE_URL = "http://localhost:3000"
-# BASE_URL = 'https://academic.ui.ac.id'
+# BASE_URL = "https://academic.ui.ac.id"
 BASE_HEADERS = {
     "accept": "text/html,application/xhtml+xml,application/xml;q=0.9,image/avif,image/webp,image/apng,*/*;q=0.8,application/signed-exchange;v=b3;q=0.9",
     "accept-language": "en-US,en;q=0.9",
@@ -50,11 +54,14 @@ class SIAKClient:
     DELAY = 0.5
     TIMEOUT = 5000
 
-    def __init__(self):
+    def __init__(self, console: "Console"):
+        self._console = console
+        self._ssl_context = httpx.create_ssl_context(verify="certigo.pem")
         self._client = httpx.AsyncClient(
             timeout=self.TIMEOUT,
             follow_redirects=False,
             headers=BASE_HEADERS,
+            verify=False,
         )
 
     async def _request(
@@ -71,7 +78,7 @@ class SIAKClient:
             nonlocal is_requesting
             nonlocal response
             try:
-                if resp.exception() or resp.cancelled():
+                if resp.cancelled():
                     return
             except asyncio.CancelledError:
                 return
@@ -82,6 +89,7 @@ class SIAKClient:
                 response = resp.result()
 
         while is_requesting:
+            self._console.log("Requesting")
             task = asyncio.create_task(self._client.request(method, url, data=data))
             task.add_done_callback(_on_request_done)
             futures.append(task)
@@ -101,14 +109,17 @@ class SIAKClient:
         self._client.cookies.clear()
 
     async def login(self, username: str, password: str):
+        self._console.log("Logging in")
         await self._request(
             "POST",
             f"{BASE_URL}/main/Authentication/Index",
-            {"username": username, "password": password},
+            {"u": username, "p": password},
         )
+        self._console.log("Checking for cookie")
         if not self._client.cookies.get("siakng_cc"):
             return False
 
+        self._console.log("Changing role")
         await self._request("GET", f"{BASE_URL}/main/Authentication/ChangeRole")
         return True
 

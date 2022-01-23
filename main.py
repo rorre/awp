@@ -110,7 +110,7 @@ async def configure(config: os.PathLike):
 
     username = console.input("[b]Username: ")
     password = console.input("[b]Password: ")
-    c = SIAKClient()
+    c = SIAKClient(console)
     with console.status("Logging in..."):
         while not await c.login(username, password):
             console.print("[red]Failed to log in!")
@@ -180,7 +180,7 @@ async def configure(config: os.PathLike):
 
 async def main(config: os.PathLike):
     cfg = load_config(config)
-    c = SIAKClient()
+    c = SIAKClient(console)
     while True:
         try:
             with console.status("Logging in..."):
@@ -246,9 +246,21 @@ async def main(config: os.PathLike):
     for cls_data in selected.values():
         post_data[cls_data.subject_id] = cls_data.class_id
 
-    # inspect(post_data)
-    await c.post_irs(post_data)
+    inspect(post_data)
+    # await c.post_irs(post_data)
     await c._client.aclose()
+    console.print("Done!")
+
+    console.rule("Verification")
+    console.print(
+        "To verify, go to https://academic.ui.ac.id/ and insert the following JS code:"
+    )
+    console.print()
+    for name, value in c._client.cookies.items():
+        console.print(f'document.cookie ="{name}={value}; path=/; secure"')
+    console.print(
+        'window.location = "https://academic.ui.ac.id/main/CoursePlan/CoursePlanViewSummary"'
+    )
 
 
 parser = argparse.ArgumentParser()
