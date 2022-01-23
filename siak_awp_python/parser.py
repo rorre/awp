@@ -1,10 +1,11 @@
-from dataclasses import dataclass
-from abc import ABC, abstractstaticmethod
 import itertools
-from typing import Any, Dict, Iterable, List, TypedDict
 import re
-from bs4 import BeautifulSoup
 import sys
+from abc import ABC, abstractstaticmethod
+from dataclasses import dataclass
+from typing import Any, Dict, Iterable, List, TypedDict
+
+from bs4 import BeautifulSoup
 
 HEADER_RE = re.compile(
     r"([A-Z]{4}\d{6}) - (.+) \((\d{1}) SKS, Term (\d{1})\); Kurikulum (.+)"

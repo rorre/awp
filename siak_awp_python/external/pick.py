@@ -1,6 +1,6 @@
 import curses
 from dataclasses import dataclass, field
-from typing import Callable, List, Optional, Dict
+from typing import Callable, Dict, List, Optional
 
 __all__ = ["Picker", "pick"]
 

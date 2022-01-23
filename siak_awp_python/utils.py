@@ -1,8 +1,8 @@
-from typing import List, Optional
-from siak_awp_python.config import SubjectSelection
-
-from siak_awp_python.parser import SubjectClass
 import itertools
+from typing import List, Optional
+
+from siak_awp_python.config import SubjectSelection
+from siak_awp_python.parser import SubjectClass
 
 
 def selection_to_config(selections: List[SubjectClass]) -> List[SubjectSelection]:

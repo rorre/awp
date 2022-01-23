@@ -1,9 +1,10 @@
 import asyncio
 from typing import TYPE_CHECKING, Dict, List
+
 import httpx
 from bs4 import BeautifulSoup
-
 from rich import inspect
+
 from siak_awp_python.parser import IRSEdit, Schedule
 
 if TYPE_CHECKING:

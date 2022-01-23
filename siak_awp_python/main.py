@@ -1,15 +1,17 @@
 import argparse
 import asyncio
-from typing import Dict, Literal, Tuple, TypeVar, overload, Union, List
 import os
+from typing import Dict, List, Literal, Tuple, TypeVar, Union, overload
+
+from rich import inspect
+from rich.console import Console
+from rich.prompt import Confirm, Prompt
+
 from siak_awp_python.config import load_config, write_config
+from siak_awp_python.external.pick import pick
 from siak_awp_python.parser import IRSClass, Schedule, SubjectClass
 from siak_awp_python.request import SIAKClient, SIAKException
-from rich.console import Console
-from rich import inspect
-from siak_awp_python.external.pick import pick
 from siak_awp_python.utils import selection_to_config
-from rich.prompt import Confirm, Prompt
 
 console = Console()
 T = TypeVar("T")
