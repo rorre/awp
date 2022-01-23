@@ -18,7 +18,7 @@ class SubjectSelection(TypedDict):
 class Config(TypedDict):
     username: str
     password: str
-    fallback: Literal["available", "lowest"]
+    fallback: Literal["available", "lowest", "dontcare"]
     selections: List[SubjectSelection]
 
 
