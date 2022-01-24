@@ -141,13 +141,19 @@ class SIAKClient:
             raise SIAKException("IRS not yet opened.", soup)
         return IRSEdit.from_html(res.text)
 
-    async def post_irs(self, selections: Dict[str, str]):
-        if "tokens" not in selections:
+    async def post_irs(self, post_data: Dict[str, str]):
+        if "tokens" not in post_data:
             irs_page = await self.get_irs()
-            selections["tokens"] = irs_page
+            post_data["tokens"] = irs_page
+        
+        if "comment" not in post_data:
+            post_data["comment"] = ""
+
+        if "submit" not in post_data:
+            post_data["submit"] = "Simpan IRS"
 
         await self._request(
             "POST",
             f"{BASE_URL}/main/CoursePlan/CoursePlanSave",
-            selections,
+            post_data,
         )
