@@ -1,7 +1,8 @@
-from os import PathLike
 from typing import List, Literal, TypedDict
 
 import yaml
+
+from siak_awp_python.types import StrOrBytesPath
 
 try:
     from yaml import CDumper as Dumper
@@ -24,11 +25,11 @@ class Config(TypedDict):
     selections: List[SubjectSelection]
 
 
-def load_config(path: PathLike) -> Config:
+def load_config(path: StrOrBytesPath) -> Config:
     with open(path, "r") as f:
         return yaml.load(f.read(), Loader)
 
 
-def write_config(path: PathLike, config: Config):
+def write_config(path: StrOrBytesPath, config: Config):
     with open(path, "w") as f:
         yaml.dump(config, f, Dumper)

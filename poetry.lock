@@ -433,6 +433,24 @@ optional = false
 python-versions = ">=3.6"
 
 [[package]]
+name = "textual"
+version = "0.1.15"
+description = "Text User Interface using Rich"
+category = "main"
+optional = false
+python-versions = "^3.7"
+develop = false
+
+[package.dependencies]
+rich = "^11.0.0"
+
+[package.source]
+type = "git"
+url = "https://github.com/Textualize/textual.git"
+reference = "main"
+resolved_reference = "cfefb36ee4dcd4ac3b5c5bde5c040ebeb55f11e6"
+
+[[package]]
 name = "tomli"
 version = "1.2.3"
 description = "A lil' TOML parser"
@@ -475,7 +493,7 @@ python-versions = "*"
 [metadata]
 lock-version = "1.1"
 python-versions = "^3.9"
-content-hash = "a15bf4781992d8552192ac1d9ae32be2c26b984ea0362552130d0a1e7cc3152b"
+content-hash = "a2fd074b5fc243086642072f9c8f58bb111f487691491897c7f11cb9594931d9"
 
 [metadata.files]
 anyio = [
@@ -759,6 +777,7 @@ soupsieve = [
     {file = "soupsieve-2.3.1-py3-none-any.whl", hash = "sha256:1a3cca2617c6b38c0343ed661b1fa5de5637f257d4fe22bd9f1338010a1efefb"},
     {file = "soupsieve-2.3.1.tar.gz", hash = "sha256:b8d49b1cd4f037c7082a9683dfa1801aa2597fb11c3a1155b7a5b94829b4f1f9"},
 ]
+textual = []
 tomli = [
     {file = "tomli-1.2.3-py3-none-any.whl", hash = "sha256:e3069e4be3ead9668e21cb9b074cd948f7b3113fd9c8bba083f48247aab8b11c"},
     {file = "tomli-1.2.3.tar.gz", hash = "sha256:05b6166bff487dc068d322585c7ea4ef78deed501cc124060e0f238e89a9231f"},
