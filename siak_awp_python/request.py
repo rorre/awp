@@ -52,7 +52,7 @@ def is_valid_response(response: httpx.Response):
 
 
 class SIAKClient:
-    DELAY = 0.5
+    DELAY = 2
     TIMEOUT = 5000
 
     def __init__(self, console: "Console"):
@@ -79,9 +79,13 @@ class SIAKClient:
             nonlocal is_requesting
             nonlocal response
             try:
+                if ex := resp.exception():
+                    raise ex
                 if resp.cancelled():
                     return
             except asyncio.CancelledError:
+                return
+            except httpx.ConnectError:
                 return
 
             if is_valid_response(resp.result()):
