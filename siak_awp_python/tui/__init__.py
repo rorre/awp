@@ -123,7 +123,7 @@ class MyApp(App):
 
 async def get_schedule(c: SIAKClient, config: StrOrBytesPath, console: Console):
     username = console.input("[b]Username: ")
-    password = console.input("[b]Password: ")
+    password = console.input("[b]Password: ", password=True)
 
     with console.status("Logging in..."):
         if not await c.login(username, password):
