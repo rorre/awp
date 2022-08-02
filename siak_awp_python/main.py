@@ -3,7 +3,6 @@ import asyncio
 from typing import Awaitable, Callable, Dict, List, Literal
 
 from rich.console import Console
-from rich.prompt import Confirm
 
 from siak_awp_python.config import load_config
 from siak_awp_python.parser import IRSClass
@@ -80,6 +79,7 @@ async def main(c: SIAKClient, config: StrOrBytesPath, console: Console):
                     cfg["fallback"],  # type: ignore
                     console,
                 )
+                console.log("[green]Got class " + selected[pref["name"]].name)
 
     console.rule("Result")
     console.print("[bold]Selected class")
@@ -91,9 +91,9 @@ async def main(c: SIAKClient, config: StrOrBytesPath, console: Console):
             cls_info = "[black on cyan]" + selected[cls["name"]].name
         console.print("-", f"{cls['name']:<{left_length}}:", cls_info)
 
-    if not Confirm.ask("Are you sure you want to proceed?", console=console):
-        console.print("Exitting...")
-        return
+    # if not Confirm.ask("Are you sure you want to proceed?", console=console):
+    #     console.print("Exitting...")
+    #     return
 
     post_data = {}
     post_data["tokens"] = irs.token
