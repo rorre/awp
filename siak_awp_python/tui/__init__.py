@@ -122,12 +122,6 @@ class MyApp(App):
 
 
 async def get_schedule(c: SIAKClient, config: StrOrBytesPath, console: Console):
-    if os.path.exists(config):
-        console.print("[red bold]This will REPLACE your current config.")
-        if not Confirm.ask("Are you sure you want to proceed?", console=console):
-            console.print("Exitting...")
-            return
-
     username = console.input("[b]Username: ")
     password = console.input("[b]Password: ")
 
@@ -147,6 +141,13 @@ async def get_schedule(c: SIAKClient, config: StrOrBytesPath, console: Console):
 
 async def main(c: SIAKClient, config: StrOrBytesPath, console: Console):
     c = SIAKClient(console)
+
+    if os.path.exists(config):
+        console.print("[red bold]This will REPLACE your current config.")
+        if not Confirm.ask("Are you sure you want to proceed?", console=console):
+            console.print("Exitting...")
+            return
+
     username, password, schedule = await get_schedule(c, config, console)
     await MyApp(
         username=username,
