@@ -1,4 +1,5 @@
 import asyncio
+import ssl
 from typing import TYPE_CHECKING, Dict, List
 
 import httpx
@@ -10,8 +11,8 @@ from siak_awp_python.parser import IRSEdit, Schedule
 if TYPE_CHECKING:
     from rich import Console
 
-BASE_URL = "http://localhost:3000"
-# BASE_URL = "https://academic.ui.ac.id"
+# BASE_URL = "http://localhost:3000"
+BASE_URL = "https://academic.ui.ac.id"
 BASE_HEADERS = {
     "accept": "text/html,application/xhtml+xml,application/xml;q=0.9,image/avif,image/webp,image/apng,*/*;q=0.8,application/signed-exchange;v=b3;q=0.9",
     "accept-language": "en-US,en;q=0.9",
@@ -57,12 +58,16 @@ class SIAKClient:
 
     def __init__(self, console: "Console"):
         self._console = console
-        self._ssl_context = httpx.create_ssl_context(verify="certigo.pem")
+        self._ssl_context = httpx.create_ssl_context()
+        self._ssl_context.set_ciphers("DEFAULT@SECLEVEL=1")
+        self._ssl_context.options |= ssl.OP_NO_TLSv1_3
+        self._ssl_context.load_verify_locations("certigo.pem")
+
         self._client = httpx.AsyncClient(
             timeout=self.TIMEOUT,
             follow_redirects=False,
             headers=BASE_HEADERS,
-            verify=False,
+            verify=self._ssl_context,
         )
 
     async def _request(
