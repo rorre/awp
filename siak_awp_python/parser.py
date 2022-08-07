@@ -142,8 +142,9 @@ def _parse_box(box: BeautifulSoup):
             if len(children) == 4:
                 continue
 
+            teachers_idx = 6 if len(children) == 7 else 4
             name = children[1].text.strip()
-            teachers = [t[1:].strip() for t in children[6].stripped_strings]
+            teachers = [t[1:].strip() for t in children[teachers_idx].stripped_strings]
 
             result[current_subject_name].append(
                 {
