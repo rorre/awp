@@ -11,8 +11,8 @@ from siak_awp_python.parser import IRSEdit, Schedule
 if TYPE_CHECKING:
     from rich import Console
 
-# BASE_URL = "http://localhost:3000"
 BASE_URL = "https://academic.ui.ac.id"
+BASE_URL = "http://localhost:3000"
 BASE_HEADERS = {
     "accept": "text/html,application/xhtml+xml,application/xml;q=0.9,image/avif,image/webp,image/apng,*/*;q=0.8,application/signed-exchange;v=b3;q=0.9",
     "accept-language": "en-US,en;q=0.9",
