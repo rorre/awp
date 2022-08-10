@@ -74,7 +74,6 @@ class IRSEdit(BaseParser):
         }
 
     def get_classes_by_id(self, subject_id: str, curriculum: str):
-        print(self.classes_by_id)
         return self.classes_by_id[f"c[{subject_id}_{curriculum}]"]
 
     def parse(soup: BeautifulSoup) -> Iterable[Any]:
