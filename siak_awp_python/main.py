@@ -4,8 +4,8 @@ from typing import Awaitable, Callable, Dict, List, Literal
 
 from rich.console import Console
 
-from siak_awp_python.config import load_config
-from siak_awp_python.parser import IRSClass
+from siak_awp_python.config import Config, load_config
+from siak_awp_python.parser import IRSClass, IRSEdit
 from siak_awp_python.request import SIAKClient, SIAKException
 from siak_awp_python.tui import main as configure
 from siak_awp_python.types import StrOrBytesPath
@@ -31,6 +31,47 @@ def fallback(
     return min(preferred_class, key=lambda x: x.registrant)
 
 
+def select_classes(cfg: Config, console: Console, irs: IRSEdit):
+    selected: Dict[str, IRSClass] = {}
+    for pref in cfg["selections"]:
+        console.log(f"Selecting for [cyan]{pref['name']}")
+        try:
+            subject_classes = irs.get_classes_by_id(pref["code"], pref["curriculum"])
+        except:
+            break
+
+        for i in pref["preference"]:
+            current_cls = subject_classes[i]
+            if (
+                current_cls.registrant >= current_cls.capacity
+                and cfg["fallback"] != "dontcare"
+            ):
+                console.log(
+                    f"Class [cyan]{current_cls.name}[/cyan] is [red]full[/red]."
+                    + f" [gray]({current_cls.registrant}/{current_cls.capacity})[/gray]"
+                    + " Skipping..."
+                )
+                continue
+
+            console.log("[green]Got class " + current_cls.name)
+            selected[pref["name"]] = current_cls
+            break
+        else:
+            console.log(
+                "[red]Running fallback with",
+                f"[bold]{cfg['fallback']}[/bold]",
+                "[red]strategy...",
+            )
+            selected[pref["name"]] = fallback(
+                pref["preference"],
+                subject_classes,
+                cfg["fallback"],  # type: ignore
+                console,
+            )
+            console.log("[green]Got class " + selected[pref["name"]].name)
+    return selected
+
+
 async def main(c: SIAKClient, config: StrOrBytesPath, console: Console):
     cfg = load_config(config)
     while True:
@@ -48,54 +89,15 @@ async def main(c: SIAKClient, config: StrOrBytesPath, console: Console):
         try:
             with console.status("Fetching IRS page..."):
                 irs = await c.get_irs()
+                console.log(irs.classes_by_id)
 
         except SIAKException as e:
             console.log(f"[yellow]{e.message}, retrying...")
             continue
 
-        success = True
         with console.status("Selecting..."):
-            selected: Dict[str, IRSClass] = {}
-            for pref in cfg["selections"]:
-                console.log(f"Selecting for [cyan]{pref['name']}")
-                try:
-                    subject_classes = irs.get_classes_by_id(
-                        pref["code"], pref["curriculum"]
-                    )
-                except:
-                    success = False
-                    break
-
-                for i in pref["preference"]:
-                    current_cls = subject_classes[i]
-                    if (
-                        current_cls.registrant >= current_cls.capacity
-                        and cfg["fallback"] != "dontcare"
-                    ):
-                        console.log(
-                            f"Class [cyan]{current_cls.name}[/cyan] is [red]full[/red]."
-                            + f" [gray]({current_cls.registrant}/{current_cls.capacity})[/gray]"
-                            + " Skipping..."
-                        )
-                        continue
-
-                    console.log("[green]Got class " + current_cls.name)
-                    selected[pref["name"]] = current_cls
-                    break
-                else:
-                    console.log(
-                        "[red]Running fallback with",
-                        f"[bold]{cfg['fallback']}[/bold]",
-                        "[red]strategy...",
-                    )
-                    selected[pref["name"]] = fallback(
-                        pref["preference"],
-                        subject_classes,
-                        cfg["fallback"],  # type: ignore
-                        console,
-                    )
-                    console.log("[green]Got class " + selected[pref["name"]].name)
-            stop = success
+            selected = select_classes(cfg, console, irs)
+            stop = bool(selected)
 
     console.rule("Result")
     console.print("[bold]Selected class")
