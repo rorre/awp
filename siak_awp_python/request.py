@@ -88,9 +88,8 @@ class SIAKClient:
                     raise ex
                 if resp.cancelled():
                     return
-            except asyncio.CancelledError:
-                return
-            except httpx.ConnectError:
+
+            except:
                 return
 
             if is_valid_response(resp.result()):
@@ -107,7 +106,7 @@ class SIAKClient:
 
         try:
             await asyncio.gather(*futures, return_exceptions=False)
-        except asyncio.CancelledError:
+        except:
             pass
 
         return response
