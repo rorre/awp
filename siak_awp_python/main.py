@@ -115,7 +115,8 @@ async def main(c: SIAKClient, config: StrOrBytesPath, console: Console):
 
         for cls_data in selected.values():
             post_data[cls_data.subject_id] = cls_data.class_id
-    except:
+    except BaseException:
+        console.print_exception(show_locals=True)
         console.log("[red]Error selecting classes, using defaults...")
         post_data.update(cfg["default"])
 
