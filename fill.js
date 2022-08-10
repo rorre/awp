@@ -4,7 +4,7 @@
 // @version      0.1
 // @description  try to take over the world!
 // @author       You
-// @match        https://*
+// @match        *://*/*
 // @icon         https://www.google.com/s2/favicons?sz=64&domain=academic.ui.ac.id
 // @grant        none
 // ==/UserScript==
@@ -13,7 +13,7 @@
   "use strict";
 
   // Your code here...
-  window.irsfill = (matkuls) => {
+  window.irsfill = (matkuls, bypass) => {
     let matkulCollection = [];
     function findRows(selectedSubjects) {
       for (let elem of selectedSubjects) {
@@ -51,7 +51,7 @@
       let isSelected = false;
       let isBackup = false;
       for (let elem of row) {
-        if (isCapable(elem)) {
+        if (isCapable(elem) || bypass) {
           elem.click();
           let className =
             elem.parentElement.nextElementSibling.textContent.trim();
@@ -73,5 +73,6 @@
       }
     }
     window.scrollTo(0, document.body.scrollHeight);
+    bypass && document.getElementsByName("submit")[0].click();
   };
 })();
