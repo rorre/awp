@@ -38,48 +38,64 @@ async def main(c: SIAKClient, config: StrOrBytesPath, console: Console):
             with console.status("Logging in..."):
                 await c.login(cfg["username"], cfg["password"])
 
+            break
+        except SIAKException as e:
+            console.log(f"[yellow]{e.message}, logging out and retrying...")
+            c.logout()
+
+    stop = False
+    while not stop:
+        try:
             with console.status("Fetching IRS page..."):
                 irs = await c.get_irs()
 
-            break
-        except SIAKException:
-            console.log("[yellow]IRS not yet opened, logging out and retrying...")
-            c.logout()
+        except SIAKException as e:
+            console.log(f"[yellow]{e.message}, retrying...")
+            continue
 
-    with console.status("Selecting..."):
-        selected: Dict[str, IRSClass] = {}
-        for pref in cfg["selections"]:
-            console.log(f"Selecting for [cyan]{pref['name']}")
-            subject_classes = irs.get_classes_by_id(pref["code"], pref["curriculum"])
-            for i in pref["preference"]:
-                current_cls = subject_classes[i]
-                if (
-                    current_cls.registrant >= current_cls.capacity
-                    and cfg["fallback"] != "dontcare"
-                ):
-                    console.log(
-                        f"Class [cyan]{current_cls.name}[/cyan] is [red]full[/red]."
-                        + f" [gray]({current_cls.registrant}/{current_cls.capacity})[/gray]"
-                        + " Skipping..."
+        success = True
+        with console.status("Selecting..."):
+            selected: Dict[str, IRSClass] = {}
+            for pref in cfg["selections"]:
+                console.log(f"Selecting for [cyan]{pref['name']}")
+                try:
+                    subject_classes = irs.get_classes_by_id(
+                        pref["code"], pref["curriculum"]
                     )
-                    continue
+                except:
+                    success = False
+                    break
 
-                console.log("[green]Got class " + current_cls.name)
-                selected[pref["name"]] = current_cls
-                break
-            else:
-                console.log(
-                    "[red]Running fallback with",
-                    f"[bold]{cfg['fallback']}[/bold]",
-                    "[red]strategy...",
-                )
-                selected[pref["name"]] = fallback(
-                    pref["preference"],
-                    subject_classes,
-                    cfg["fallback"],  # type: ignore
-                    console,
-                )
-                console.log("[green]Got class " + selected[pref["name"]].name)
+                for i in pref["preference"]:
+                    current_cls = subject_classes[i]
+                    if (
+                        current_cls.registrant >= current_cls.capacity
+                        and cfg["fallback"] != "dontcare"
+                    ):
+                        console.log(
+                            f"Class [cyan]{current_cls.name}[/cyan] is [red]full[/red]."
+                            + f" [gray]({current_cls.registrant}/{current_cls.capacity})[/gray]"
+                            + " Skipping..."
+                        )
+                        continue
+
+                    console.log("[green]Got class " + current_cls.name)
+                    selected[pref["name"]] = current_cls
+                    break
+                else:
+                    console.log(
+                        "[red]Running fallback with",
+                        f"[bold]{cfg['fallback']}[/bold]",
+                        "[red]strategy...",
+                    )
+                    selected[pref["name"]] = fallback(
+                        pref["preference"],
+                        subject_classes,
+                        cfg["fallback"],  # type: ignore
+                        console,
+                    )
+                    console.log("[green]Got class " + selected[pref["name"]].name)
+            stop = success
 
     console.rule("Result")
     console.print("[bold]Selected class")

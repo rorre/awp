@@ -40,7 +40,6 @@ class IRSClass(BaseParser):
     capacity: int
     registrant: int
     term: int
-    teachers: List[str]
 
     def parse(soup: BeautifulSoup) -> Iterable[Any]:
         args = []
@@ -61,13 +60,6 @@ class IRSClass(BaseParser):
         args.append(int(children[4].text.strip()))  # Registrant
         args.append(int(children[5].text.strip()))  # Term
 
-        if len(children) == 7:
-            args.append([])
-        else:
-            args.append(
-                [t[1:].strip() for t in children[8].stripped_strings]
-            )  # Teachers
-
         return args
 
 
@@ -84,9 +76,11 @@ class IRSEdit(BaseParser):
         }
 
     def get_classes_by_id(self, subject_id: str, curriculum: str):
+        print(self.classes_by_id)
         return self.classes_by_id[f"c[{subject_id}_{curriculum}]"]
 
     def parse(soup: BeautifulSoup) -> Iterable[Any]:
+        print(soup)
         irs_box = soup.select(".box")
         if not irs_box:
             raise ParserException("Cannot find IRS box.", soup)
