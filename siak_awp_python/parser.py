@@ -39,7 +39,6 @@ class IRSClass(BaseParser):
     name: str
     capacity: int
     registrant: int
-    term: int
 
     def parse(soup: BeautifulSoup) -> Iterable[Any]:
         args = []
@@ -58,7 +57,6 @@ class IRSClass(BaseParser):
             args.append(int(children[3].text.strip()))  # Capacity
 
         args.append(int(children[4].text.strip()))  # Registrant
-        args.append(int(children[5].text.strip()))  # Term
 
         return args
 
@@ -104,7 +102,6 @@ class SubjectClass(TypedDict):
     subject_name: str
     sks: int
     name: str
-    teachers: List[str]
     idx: int
 
 
@@ -135,10 +132,7 @@ def _parse_box(box: BeautifulSoup):
             children = list(class_row.select("td"))
             if len(children) == 4:
                 continue
-
-            teachers_idx = 6 if len(children) == 7 else 4
             name = children[1].text.strip()
-            teachers = [t[1:].strip() for t in children[teachers_idx].stripped_strings]
 
             result[current_subject_name].append(
                 {
@@ -147,7 +141,6 @@ def _parse_box(box: BeautifulSoup):
                     "subject_name": current_subject_name,
                     "sks": current_sks,
                     "name": name,
-                    "teachers": teachers,
                     "idx": idx,
                 }
             )
