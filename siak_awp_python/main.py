@@ -35,10 +35,7 @@ def select_classes(cfg: Config, console: Console, irs: IRSEdit):
     selected: Dict[str, IRSClass] = {}
     for pref in cfg["selections"]:
         console.log(f"Selecting for [cyan]{pref['name']}")
-        try:
-            subject_classes = irs.get_classes_by_id(pref["code"], pref["curriculum"])
-        except:
-            break
+        subject_classes = irs.get_classes_by_id(pref["code"], pref["curriculum"])
 
         for i in pref["preference"]:
             current_cls = subject_classes[i]
@@ -84,39 +81,43 @@ async def main(c: SIAKClient, config: StrOrBytesPath, console: Console):
             console.log(f"[yellow]{e.message}, logging out and retrying...")
             c.logout()
 
-    stop = False
-    while not stop:
+    while True:
         try:
             with console.status("Fetching IRS page..."):
                 irs = await c.get_irs()
                 console.log(irs.classes_by_id)
 
+            break
         except SIAKException as e:
             console.log(f"[yellow]{e.message}, retrying...")
             continue
 
-        with console.status("Selecting..."):
-            selected = select_classes(cfg, console, irs)
-            stop = bool(selected)
-
-    console.rule("Result")
-    console.print("[bold]Selected class")
-    left_length = max(len(x["name"]) + 2 for x in cfg["selections"])
-
-    for cls in cfg["selections"]:
-        cls_info = "[white on red]Cannot get any class."
-        if cls["name"] in selected:
-            cls_info = "[black on cyan]" + selected[cls["name"]].name
-        console.print("-", f"{cls['name']:<{left_length}}:", cls_info)
-
-    # if not Confirm.ask("Are you sure you want to proceed?", console=console):
-    #     console.print("Exitting...")
-    #     return
-
     post_data = {}
     post_data["tokens"] = irs.token
-    for cls_data in selected.values():
-        post_data[cls_data.subject_id] = cls_data.class_id
+
+    try:
+        with console.status("Selecting..."):
+            selected = select_classes(cfg, console, irs)
+
+        console.rule("Result")
+        console.print("[bold]Selected class")
+        left_length = max(len(x["name"]) + 2 for x in cfg["selections"])
+
+        for cls in cfg["selections"]:
+            cls_info = "[white on red]Cannot get any class."
+            if cls["name"] in selected:
+                cls_info = "[black on cyan]" + selected[cls["name"]].name
+            console.print("-", f"{cls['name']:<{left_length}}:", cls_info)
+
+        # if not Confirm.ask("Are you sure you want to proceed?", console=console):
+        #     console.print("Exitting...")
+        #     return
+
+        for cls_data in selected.values():
+            post_data[cls_data.subject_id] = cls_data.class_id
+    except:
+        console.log("[red]Error selecting classes, using defaults...")
+        post_data.update(cfg["default"])
 
     # inspect(post_data)
     await c.post_irs(post_data)

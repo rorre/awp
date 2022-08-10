@@ -34,7 +34,7 @@ class MyApp(App):
         config_path: StrOrBytesPath,
         schedule: Schedule,
         *args,
-        **kwargs
+        **kwargs,
     ):
         super().__init__(*args, **kwargs)
         self.username = username
@@ -90,6 +90,12 @@ class MyApp(App):
         for selections in self.selections.values():
             res.append(subject_to_config(selections))
 
+        default = {}
+        for v in self.selections.values():
+            prio = v[0]
+            key = f"c[{prio['subject_id']}_{prio['curriculum_id']}]"
+            default[key] = prio["class_id"]
+
         write_config(
             self.config_path,
             {
@@ -97,6 +103,7 @@ class MyApp(App):
                 "password": self.password,
                 "fallback": "available",
                 "selections": res,
+                "default": default,
             },
         )
 

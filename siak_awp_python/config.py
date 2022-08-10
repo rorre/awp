@@ -1,4 +1,4 @@
-from typing import List, Literal, TypedDict
+from typing import Dict, List, Literal, TypedDict
 
 import yaml
 
@@ -23,6 +23,7 @@ class Config(TypedDict):
     password: str
     fallback: Literal["available", "lowest", "dontcare"]
     selections: List[SubjectSelection]
+    default: Dict[str, str]
 
 
 def load_config(path: StrOrBytesPath) -> Config:

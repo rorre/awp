@@ -1,5 +1,5 @@
 import itertools
-from typing import List, Optional
+from typing import Iterator, List, Optional
 
 from siak_awp_python.config import SubjectSelection
 from siak_awp_python.parser import SubjectClass
@@ -12,7 +12,7 @@ def selection_to_config(selections: List[SubjectClass]) -> List[SubjectSelection
     return res
 
 
-def subject_to_config(selections: List[SubjectClass]) -> SubjectSelection:
+def subject_to_config(selections: Iterator[SubjectClass]) -> SubjectSelection:
     sample: Optional[SubjectClass] = None
     preferences: List[int] = []
     for cls in selections:

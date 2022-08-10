@@ -99,6 +99,7 @@ class SubjectClass(TypedDict):
     subject_id: str
     curriculum_id: str
     subject_name: str
+    class_id: str
     sks: int
     name: str
     idx: int
@@ -133,6 +134,10 @@ def _parse_box(box: BeautifulSoup):
                 continue
             name = children[1].text.strip()
 
+            class_link = class_row.select_one("td > a")
+            assert class_link is not None
+            class_id = class_link.attrs["href"].split("=")[-1]
+
             result[current_subject_name].append(
                 {
                     "subject_id": current_subject_id,
@@ -141,6 +146,7 @@ def _parse_box(box: BeautifulSoup):
                     "sks": current_sks,
                     "name": name,
                     "idx": idx,
+                    "class_id": f"{class_id}-{current_sks}",
                 }
             )
             idx += 1
