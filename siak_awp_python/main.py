@@ -90,6 +90,10 @@ async def main(c: SIAKClient, config: StrOrBytesPath, console: Console):
             break
         except SIAKException as e:
             console.log(f"[yellow]{e.message}, retrying...")
+            if "opened" in e.message:
+                console.log("[yellow]Relogging in")
+                c.logout()
+                await c.login(cfg["username"], cfg["password"])
             continue
 
     post_data = {}
