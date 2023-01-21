@@ -1,11 +1,11 @@
 import itertools
 import re
 import sys
-from abc import ABC, abstractstaticmethod
+from abc import ABC, abstractmethod, abstractstaticmethod
 from dataclasses import dataclass
 from typing import Any, Dict, Iterable, List, TypedDict
 
-from bs4 import BeautifulSoup
+from bs4 import BeautifulSoup, Tag
 
 HEADER_RE = re.compile(
     r"([A-Z]{4}\d{6}) - (.+) \((\d{1}) SKS, Term (\d{1})\); Kurikulum (.+)"
@@ -13,14 +13,15 @@ HEADER_RE = re.compile(
 
 
 class ParserException(BaseException):
-    def __init__(self, message: str, soup: BeautifulSoup):
+    def __init__(self, message: str, soup: BeautifulSoup | Tag):
         super().__init__(message)
         self.message = message
         self.soup = soup
 
 
 class BaseParser(ABC):
-    @abstractstaticmethod
+    @staticmethod
+    @abstractmethod
     def parse(soup: BeautifulSoup) -> Iterable[Any]:
         pass
 
@@ -40,7 +41,8 @@ class IRSClass(BaseParser):
     capacity: int
     registrant: int
 
-    def parse(soup: BeautifulSoup) -> Iterable[Any]:
+    @staticmethod
+    def parse(soup: Tag) -> Iterable[Any]:
         args = []
         inp = soup.select_one("td > input")
         if not inp:
@@ -76,6 +78,7 @@ class IRSEdit(BaseParser):
     def get_classes_by_id(self, subject_id: str, curriculum: str):
         return self.classes_by_id[f"c[{subject_id}_{curriculum}]"]
 
+    @staticmethod
     def parse(soup: BeautifulSoup) -> Iterable[Any]:
         print(soup)
         irs_box = soup.select(".box")
@@ -88,9 +91,9 @@ class IRSEdit(BaseParser):
                 if "class" in cls.attrs:
                     classes.append(IRSClass(*IRSClass.parse(cls)))
 
-            token = soup.select_one('input[name="tokens"]')
-            if not token:
-                raise ParserException("Cannot find token.", soup)
+        token = soup.select_one('input[name="tokens"]')
+        if not token:
+            raise ParserException("Cannot find token.", soup)
 
         return [token.attrs["value"], classes]
 
@@ -105,7 +108,7 @@ class SubjectClass(TypedDict):
     idx: int
 
 
-def _parse_box(box: BeautifulSoup):
+def _parse_box(box: Tag):
     current_subject_id = ""
     current_subject_name = ""
     current_curriculum = ""
@@ -157,10 +160,11 @@ def _parse_box(box: BeautifulSoup):
 class Schedule(BaseParser):
     classes: Dict[str, Dict[str, List[SubjectClass]]]
 
+    @staticmethod
     def parse(soup: BeautifulSoup) -> Iterable[Any]:
-        subject_dict: Dict[str, List[SubjectClass]] = {}
+        subject_dict: Dict[str, Dict[str, List[SubjectClass]]] = {}
 
-        tags = soup.select_one("#ti_m1").select("h3")
+        tags = soup.select_one("#ti_m1").select("h3")  # type: ignore
         boxes = list(soup.select("table.box"))
 
         for i in range(len(boxes)):

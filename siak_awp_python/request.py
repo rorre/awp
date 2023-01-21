@@ -1,18 +1,18 @@
 import asyncio
 import ssl
-from typing import TYPE_CHECKING, Dict, List
+from typing import TYPE_CHECKING, Dict, List, Optional
 
 import httpx
-from bs4 import BeautifulSoup
+from bs4 import BeautifulSoup, Tag
 from rich import inspect
 
 from siak_awp_python.parser import IRSEdit, Schedule
 
 if TYPE_CHECKING:
-    from rich import Console
+    from rich.console import Console
 
 BASE_URL = "https://academic.ui.ac.id"
-BASE_URL = "http://localhost:3000"
+# BASE_URL = "http://localhost:3000"
 BASE_HEADERS = {
     "accept": "text/html,application/xhtml+xml,application/xml;q=0.9,image/avif,image/webp,image/apng,*/*;q=0.8,application/signed-exchange;v=b3;q=0.9",
     "accept-language": "en-US,en;q=0.9",
@@ -30,7 +30,7 @@ BASE_HEADERS = {
 
 
 class SIAKException(BaseException):
-    def __init__(self, message: str, soup: BeautifulSoup):
+    def __init__(self, message: str, soup: Optional[BeautifulSoup | Tag] = None):
         super().__init__(message)
         self.message = message
         self.soup = soup
@@ -74,7 +74,7 @@ class SIAKClient:
         self,
         method: str,
         url: str,
-        data: dict = None,
+        data: Optional[dict] = None,
     ) -> httpx.Response:
         futures: List[asyncio.Task] = []
         is_requesting = True
@@ -99,7 +99,7 @@ class SIAKClient:
 
         while is_requesting:
             self._console.log("Requesting", method, url)
-            task = asyncio.create_task(self._client.request(method, url, data=data))
+            task = asyncio.create_task(self._client.request(method, url, data=data))  # type: ignore
             task.add_done_callback(_on_request_done)
             futures.append(task)
             await asyncio.sleep(self.DELAY)
@@ -109,7 +109,7 @@ class SIAKClient:
         except:
             pass
 
-        return response
+        return response  # type: ignore
 
     async def aclose(self):
         await self._client.aclose()
@@ -126,7 +126,7 @@ class SIAKClient:
         )
         self._console.log("Checking for cookie")
         if not self._client.cookies.get("siakng_cc"):
-            return False
+            raise SIAKException("Wrong password", None)
 
         self._console.log("Changing role")
         await self._request("GET", f"{BASE_URL}/main/Authentication/ChangeRole")
@@ -135,7 +135,7 @@ class SIAKClient:
     async def get_schedule(self):
         base_schedule = await self._request("GET", f"{BASE_URL}/main/Schedule/Index")
         base_soup = BeautifulSoup(base_schedule.text, "lxml")
-        latest = base_soup.select_one("select#period > option").attrs["value"]
+        latest = base_soup.select_one("select#period > option").attrs["value"]  # type: ignore
 
         res = await self._request(
             "GET", f"{BASE_URL}/main/Schedule/Index?period={latest}"
@@ -149,7 +149,7 @@ class SIAKClient:
             raise SIAKException("IRS not yet opened.", soup)
         return IRSEdit.from_html(res.text)
 
-    async def post_irs(self, post_data: Dict[str, str]):
+    async def post_irs(self, post_data: Dict[str, IRSEdit | str]):
         if "tokens" not in post_data:
             irs_page = await self.get_irs()
             post_data["tokens"] = irs_page

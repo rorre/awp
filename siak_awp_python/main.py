@@ -88,6 +88,7 @@ async def main(c: SIAKClient, config: StrOrBytesPath, console: Console):
                 console.log(irs.classes_by_id)
 
             break
+
         except SIAKException as e:
             console.log(f"[yellow]{e.message}, retrying...")
             if "opened" in e.message:
