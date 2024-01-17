@@ -7,9 +7,7 @@ from typing import Any, Dict, Iterable, List, TypedDict
 
 from bs4 import BeautifulSoup, Tag
 
-HEADER_RE = re.compile(
-    r"([A-Z]{4}\d{6}) - (.+) \((\d{1}) SKS, Term (\d{1})\); Kurikulum (.+)"
-)
+HEADER_RE = re.compile(r"([A-Z]+\d+) - (.+) \((\d+) SKS, Term (\d+)\); Kurikulum (.+)")
 
 
 class ParserException(BaseException):
@@ -122,6 +120,7 @@ def _parse_box(box: Tag):
         if is_header:
             re_match = HEADER_RE.match(class_row.text.strip())
             if not re_match:
+                print(class_row.text.strip())
                 raise ParserException("Cannot parse header.", box)
 
             current_subject_id = re_match.group(1)
@@ -129,7 +128,7 @@ def _parse_box(box: Tag):
             current_curriculum = re_match.group(5)
             current_sks = int(re_match.group(3))
 
-            result[current_subject_name] = []
+            result[current_subject_name + " - " + current_curriculum] = []
             idx = 0
         else:
             children = list(class_row.select("td"))
@@ -141,7 +140,7 @@ def _parse_box(box: Tag):
             assert class_link is not None
             class_id = class_link.attrs["href"].split("=")[-1]
 
-            result[current_subject_name].append(
+            result[current_subject_name + " - " + current_curriculum].append(
                 {
                     "subject_id": current_subject_id,
                     "curriculum_id": current_curriculum,
