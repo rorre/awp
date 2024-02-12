@@ -1,13 +1,12 @@
 from rich.panel import Panel
 from rich.tree import Tree
-from textual.reactive import Reactive
 from textual.widget import Widget
 
 from siak_awp_python.types import SubjectClasses
 
 
 class Listing(Widget):
-    def __init__(self, selections: Reactive[SubjectClasses], name=None):
+    def __init__(self, selections: SubjectClasses, name=None):
         self.selections = selections
         super().__init__(name=name)
 

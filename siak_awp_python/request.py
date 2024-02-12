@@ -109,7 +109,7 @@ class SIAKClient:
         except:
             pass
 
-        return response  # type: ignore
+        return response  # type: ignore  # noqa: F821
 
     async def aclose(self):
         await self._client.aclose()

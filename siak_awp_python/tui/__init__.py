@@ -79,7 +79,7 @@ class MyApp(App):
     async def action_toggle_help(self):
         if self.current_menu == "help":
             self.current_menu = "main"
-            await self.body.update(self.main_content)
+            await self.body.update(self.main_content)  # type: ignore
         else:
             self.current_menu = "help"
             await self.body.update(self.help_content)
