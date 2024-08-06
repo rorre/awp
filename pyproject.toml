@@ -14,6 +14,7 @@ PyYAML = "^6.0"
 rich = "^11.0.0"
 windows-curses = "^2.3.0"
 textual = {git = "https://github.com/Textualize/textual.git", rev = "main"}
+certifi = "^2024.6.2"
 
 [tool.poetry.dev-dependencies]
 pytest = "^5.2"

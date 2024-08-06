@@ -59,8 +59,10 @@ class SIAKClient:
     def __init__(self, console: "Console"):
         self._console = console
         self._ssl_context = httpx.create_ssl_context()
-        self._ssl_context.set_ciphers("DEFAULT@SECLEVEL=1")
-        self._ssl_context.options |= ssl.OP_NO_TLSv1_3
+        self._ssl_context.set_ciphers("DEFAULT@SECLEVEL=0")
+        self._ssl_context.minimum_version = ssl.TLSVersion.TLSv1
+        self._ssl_context.maximum_version = ssl.TLSVersion.TLSv1_2
+        self._ssl_context.options = ssl.PROTOCOL_TLS & ssl.OP_NO_TLSv1_3
         self._ssl_context.load_verify_locations("certigo.pem")
 
         self._client = httpx.AsyncClient(
@@ -89,7 +91,8 @@ class SIAKClient:
                 if resp.cancelled():
                     return
 
-            except:
+            except Exception as e:
+                print(e)
                 return
 
             if is_valid_response(resp.result()):
