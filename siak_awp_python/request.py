@@ -86,10 +86,10 @@ class SIAKClient:
             nonlocal is_requesting
             nonlocal response
             try:
-                if ex := resp.exception():
-                    raise ex
                 if resp.cancelled():
                     return
+                if ex := resp.exception():
+                    raise ex
 
             except Exception as e:
                 print(e)
