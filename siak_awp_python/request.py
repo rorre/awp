@@ -40,13 +40,10 @@ def is_valid_response(response: httpx.Response):
     response_text = BeautifulSoup(response.text, "lxml").text.strip()
     if response.status_code == 200:
         return not (
-            "server SIAKNG sedang mengalami" in response_text
-            or "SIAKNG saat ini tidak dapat diakses" in response_text
+            "server SIAKNG sedang mengalami" in response_text or "SIAKNG saat ini tidak dapat diakses" in response_text
         )
     elif response.status_code == 302:
-        target = (
-            response.headers.get("Location") or response.headers.get("location") or ""
-        )
+        target = response.headers.get("Location") or response.headers.get("location") or ""
         return "Authentication" not in target
     else:
         return False
@@ -140,9 +137,7 @@ class SIAKClient:
         base_soup = BeautifulSoup(base_schedule.text, "lxml")
         latest = base_soup.select_one("select#period > option").attrs["value"]  # type: ignore
 
-        res = await self._request(
-            "GET", f"{BASE_URL}/main/Schedule/Index?period={latest}"
-        )
+        res = await self._request("GET", f"{BASE_URL}/main/Schedule/Index?period={latest}")
         return Schedule.from_html(res.text)
 
     async def get_irs(self):

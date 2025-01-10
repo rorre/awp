@@ -1,14 +1,21 @@
-import argparse
 import asyncio
-from typing import Awaitable, Callable, Dict, List, Literal
+import dataclasses
+from typing import Awaitable, Callable, Dict, List, Literal, Optional
 
 from rich.console import Console
+from tap import Tap
 
 from siak_awp_python.config import Config, load_config
 from siak_awp_python.parser import IRSClass, IRSEdit
 from siak_awp_python.request import SIAKClient, SIAKException
-from siak_awp_python.tui import main as configure
 from siak_awp_python.types import StrOrBytesPath
+
+
+class ConsoleParser(Tap):
+    cmd: Literal["run", "schedule"]
+    username: str = ""
+    password: str = ""
+    config: str = "config.yml"
 
 
 def fallback(
@@ -21,9 +28,7 @@ def fallback(
         available = list(filter(lambda x: x.capacity > x.registrant, classes))
         if not available:
             console.log("[red]No classes found with available strategy")
-            console.log(
-                "[red]Falling back to lowest strategy with all possible classes"
-            )
+            console.log("[red]Falling back to lowest strategy with all possible classes")
             return fallback(list(range(len(classes))), classes, "lowest", console)
         return min(available, key=lambda x: x.registrant)
 
@@ -39,10 +44,7 @@ def select_classes(cfg: Config, console: Console, irs: IRSEdit):
 
         for i in pref["preference"]:
             current_cls = subject_classes[i]
-            if (
-                current_cls.registrant >= current_cls.capacity
-                and cfg["fallback"] != "dontcare"
-            ):
+            if current_cls.registrant >= current_cls.capacity and cfg["fallback"] != "dontcare":
                 console.log(
                     f"Class [cyan]{current_cls.name}[/cyan] is [red]full[/red]."
                     + f" [gray]({current_cls.registrant}/{current_cls.capacity})[/gray]"
@@ -69,8 +71,8 @@ def select_classes(cfg: Config, console: Console, irs: IRSEdit):
     return selected
 
 
-async def main(c: SIAKClient, config: StrOrBytesPath, console: Console):
-    cfg = load_config(config)
+async def main(c: SIAKClient, args: ConsoleParser, console: Console):
+    cfg = load_config(args.config)
     while True:
         try:
             with console.status("Logging in..."):
@@ -130,38 +132,43 @@ async def main(c: SIAKClient, config: StrOrBytesPath, console: Console):
     console.print("Done!")
 
     console.rule("Verification")
-    console.print(
-        "To verify, go to https://academic.ui.ac.id/ and insert the following JS code:"
-    )
+    console.print("To verify, go to https://academic.ui.ac.id/ and insert the following JS code:")
     console.print()
     for name, value in c._client.cookies.items():
         console.print(f'document.cookie ="{name}={value}; path=/; secure"')
-    console.print(
-        'window.location = "https://academic.ui.ac.id/main/CoursePlan/CoursePlanViewSummary"'
-    )
+    console.print('window.location = "https://academic.ui.ac.id/main/CoursePlan/CoursePlanViewSummary"')
+
+
+async def get_schedule(c: SIAKClient, args: ConsoleParser, console: Console):
+    if not args.username or not args.password:
+        console.print("[red]Username and password is required")
+        return
+
+    await c.login(args.username, args.password)
+    schedule = await c.get_schedule()
+    classes = []
+    for class_type, courses in schedule.classes.items():
+        courses_classes = []
+        for course_name, course_class in courses.items():
+            courses_classes.append({"name": course_name, "classes": course_class})
+
+        classes.append({"type": class_type, "courses": courses_classes})
+
+    print(classes)
 
 
 def cli():
     console = Console()
-    parser = argparse.ArgumentParser()
-    parser.add_argument(
-        "--init",
-        "-i",
-        default=False,
-        type=bool,
-        action=argparse.BooleanOptionalAction,
-    )
-    parser.add_argument("--config", "-c", default="config.yaml")
-    args = parser.parse_args()
+    args = ConsoleParser().parse_args()
 
-    async def wrapper(f: Callable[[SIAKClient, StrOrBytesPath, Console], Awaitable]):
+    async def wrapper(f: Callable[[SIAKClient, ConsoleParser, Console], Awaitable]):
         c = SIAKClient(console)
-        await f(c, args.config, console)
+        await f(c, args, console)
         await c.aclose()
 
-    if args.init:
-        asyncio.run(wrapper(configure))
-    else:
+    if args.cmd == "schedule":
+        asyncio.run(wrapper(get_schedule))
+    elif args.cmd == "run":
         asyncio.run(wrapper(main))
 
 
