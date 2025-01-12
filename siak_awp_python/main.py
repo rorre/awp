@@ -1,5 +1,6 @@
 import asyncio
 import dataclasses
+import json
 from typing import Awaitable, Callable, Dict, List, Literal, Optional
 
 from rich.console import Console
@@ -12,10 +13,11 @@ from siak_awp_python.types import StrOrBytesPath
 
 
 class ConsoleParser(Tap):
-    cmd: Literal["run", "schedule"]
+    cmd: Literal["run", "schedule", "login"]
     username: str = ""
     password: str = ""
     config: str = "config.yml"
+    cookies: str = ""
 
 
 def fallback(
@@ -140,11 +142,16 @@ async def main(c: SIAKClient, args: ConsoleParser, console: Console):
 
 
 async def get_schedule(c: SIAKClient, args: ConsoleParser, console: Console):
-    if not args.username or not args.password:
-        console.print("[red]Username and password is required")
+    if not args.cookies and not (args.username and args.password):
+        console.print("[red]Username and password is required, or cookies")
         return
 
-    await c.login(args.username, args.password)
+    if args.cookies:
+        cookie_json = json.loads(args.cookies)
+        c.set_cookies(cookie_json)
+    else:
+        await c.login(args.username, args.password)
+
     schedule = await c.get_schedule()
     classes = []
     for class_type, courses in schedule.classes.items():
@@ -155,6 +162,15 @@ async def get_schedule(c: SIAKClient, args: ConsoleParser, console: Console):
         classes.append({"type": class_type, "courses": courses_classes})
 
     print(classes)
+
+
+async def login(c: SIAKClient, args: ConsoleParser, console: Console):
+    if not (args.username and args.password):
+        console.print("[red]Username and password is required, or cookies")
+        return
+
+    await c.login(args.username, args.password)
+    print(c.get_cookies())
 
 
 def cli():
@@ -170,6 +186,8 @@ def cli():
         asyncio.run(wrapper(get_schedule))
     elif args.cmd == "run":
         asyncio.run(wrapper(main))
+    elif args.cmd == "login":
+        asyncio.run(wrapper(login))
 
 
 if __name__ == "__main__":

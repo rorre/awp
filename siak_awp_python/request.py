@@ -1,6 +1,7 @@
 import asyncio
 import ssl
 from typing import TYPE_CHECKING, Dict, List, Optional
+from urllib.parse import urlparse
 
 import httpx
 from bs4 import BeautifulSoup, Tag
@@ -116,6 +117,17 @@ class SIAKClient:
 
     def logout(self):
         self._client.cookies.clear()
+
+    def get_cookies(self):
+        return {
+            "Mojavi": self._client.cookies.get("Mojavi"),
+            "siakng_cc": self._client.cookies.get("siakng_cc"),
+        }
+
+    def set_cookies(self, cookies: Dict[str, str]):
+        domain = urlparse(BASE_URL).netloc
+        self._client.cookies.set("Mojavi", cookies["Mojavi"], domain=domain, path="/")
+        self._client.cookies.set("siakng_cc", cookies["siakng_cc"], domain=domain, path="/")
 
     async def login(self, username: str, password: str):
         self._console.log("Logging in")
