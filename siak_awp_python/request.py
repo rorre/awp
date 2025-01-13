@@ -140,6 +140,12 @@ class SIAKClient:
 
         while is_requesting:
             self._console.log("Requesting", method, url)
+
+            cookie = self.get_cookies()
+            self._client.cookies.clear()
+            if cookie.get("Mojavi") and cookie.get("siakng_cc"):
+                self.set_cookies(cookie)
+
             task = asyncio.create_task(self._client.request(method, url, data=data, headers=BASE_HEADERS))  # type: ignore
             task.add_done_callback(_on_request_done)
             futures.append(task)
