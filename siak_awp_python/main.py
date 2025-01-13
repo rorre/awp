@@ -161,7 +161,7 @@ async def get_schedule(c: SIAKClient, args: ConsoleParser, console: Console):
 
         classes.append({"type": class_type, "courses": courses_classes})
 
-    print(classes)
+    print(json.dumps(classes))
 
 
 async def login(c: SIAKClient, args: ConsoleParser, console: Console):
@@ -170,7 +170,7 @@ async def login(c: SIAKClient, args: ConsoleParser, console: Console):
         return
 
     await c.login(args.username, args.password)
-    print(c.get_cookies())
+    print(json.dumps(c.get_cookies()))
 
 
 def cli():
