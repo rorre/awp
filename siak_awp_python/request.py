@@ -78,10 +78,17 @@ class SIAKException(BaseException):
 
 
 def is_valid_response(response: httpx.Response):
-    response_text = BeautifulSoup(response.text, "lxml").text.strip()
+    try:
+        response_text = BeautifulSoup(response.text, "lxml").text.strip()
+    except:
+        response_text = response.text.strip()
+
     if response.status_code == 200:
         return not (
-            "server SIAKNG sedang mengalami" in response_text or "SIAKNG saat ini tidak dapat diakses" in response_text
+            "server SIAKNG sedang mengalami" in response_text
+            or "SIAKNG saat ini tidak dapat diakses" in response_text
+            or "The requested URL was rejected." in response_text
+            or "This question is for testing whether you" in response_text
         )
     elif response.status_code == 302:
         target = response.headers.get("Location") or response.headers.get("location") or ""
