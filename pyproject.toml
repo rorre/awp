@@ -1,5 +1,5 @@
 [tool.poetry]
-name = "siak-awp-python"
+name = "awp"
 version = "0.1.0"
 description = ""
 authors = ["Rendy Arya Kemal <renrror@gmail.com>"]

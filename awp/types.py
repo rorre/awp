@@ -1,7 +1,7 @@
 from os import PathLike
 from typing import Dict, List, TypeVar, Union
 
-from siak_awp_python.parser import SubjectClass
+from awp.parser import SubjectClass
 
 SubjectArray = List[SubjectClass]
 SubjectClasses = Dict[str, SubjectArray]

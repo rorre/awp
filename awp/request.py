@@ -7,7 +7,7 @@ import httpx
 from bs4 import BeautifulSoup, Tag
 from rich import inspect
 
-from siak_awp_python.parser import IRSEdit, Schedule
+from awp.parser import IRSEdit, Schedule
 
 if TYPE_CHECKING:
     from rich.console import Console

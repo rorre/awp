@@ -6,10 +6,10 @@ from typing import Awaitable, Callable, Dict, List, Literal, Optional
 from rich.console import Console
 from tap import Tap
 
-from siak_awp_python.config import Config, load_config
-from siak_awp_python.parser import IRSClass, IRSEdit
-from siak_awp_python.request import SIAKClient, SIAKException
-from siak_awp_python.types import StrOrBytesPath
+from awp.config import Config, load_config
+from awp.parser import IRSClass, IRSEdit
+from awp.request import SIAKClient, SIAKException
+from awp.types import StrOrBytesPath
 
 
 class ConsoleParser(Tap):

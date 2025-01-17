@@ -1,7 +1,7 @@
 import json
 import sys
 from typing import List, Tuple
-from siak_awp_python.config import load_config
+from awp.config import load_config
 
 output: List[Tuple[str, List[int]]] = []
 cfg = load_config(sys.argv[1])

@@ -2,7 +2,7 @@ from typing import Dict, List, Literal, TypedDict
 
 import yaml
 
-from siak_awp_python.types import StrOrBytesPath
+from awp.types import StrOrBytesPath
 
 try:
     from yaml import CDumper as Dumper
