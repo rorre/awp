@@ -1,7 +1,6 @@
 import asyncio
-import dataclasses
 import json
-from typing import Awaitable, Callable, Dict, List, Literal, Optional
+from typing import Awaitable, Callable, Dict, List, Literal
 
 from rich.console import Console
 from tap import Tap
@@ -9,7 +8,6 @@ from tap import Tap
 from awp.config import Config, load_config
 from awp.parser import IRSClass, IRSEdit
 from awp.request import SIAKClient, SIAKException
-from awp.types import StrOrBytesPath
 
 
 class ConsoleParser(Tap):
