@@ -68,17 +68,13 @@ class IRSEdit(BaseParser):
 
     @property
     def classes_by_id(self):
-        return {
-            k: list(g)
-            for k, g in itertools.groupby(self.classes, lambda x: x.subject_id)
-        }
+        return {k: list(g) for k, g in itertools.groupby(self.classes, lambda x: x.subject_id)}
 
     def get_classes_by_id(self, subject_id: str, curriculum: str):
         return self.classes_by_id[f"c[{subject_id}_{curriculum}]"]
 
     @staticmethod
     def parse(soup: BeautifulSoup) -> Iterable[Any]:
-        print(soup)
         irs_box = soup.select(".box")
         if not irs_box:
             raise ParserException("Cannot find IRS box.", soup)
@@ -120,7 +116,6 @@ def _parse_box(box: Tag):
         if is_header:
             re_match = HEADER_RE.match(class_row.text.strip())
             if not re_match:
-                print(class_row.text.strip())
                 raise ParserException("Cannot parse header.", box)
 
             current_subject_id = re_match.group(1)
