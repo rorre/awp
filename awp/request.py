@@ -77,32 +77,40 @@ class SIAKException(BaseException):
         self.soup = soup
 
 
-def is_valid_response(response: httpx.Response):
+def is_valid_response(response: httpx.Response) -> tuple[bool, Optional[str]]:
     try:
         response_text = BeautifulSoup(response.text, "lxml").text.strip()
     except:
         response_text = response.text.strip()
 
     if response.status_code == 200:
-        return not (
-            "server SIAKNG sedang mengalami" in response_text
-            or "SIAKNG saat ini tidak dapat diakses" in response_text
-            or "The requested URL was rejected." in response_text
+        if "server SIAKNG sedang mengalami" in response_text or "SIAKNG saat ini tidak dapat diakses" in response_text:
+            return False, "SIAK is down"
+        elif (
+            "The requested URL was rejected." in response_text
             or "This question is for testing whether you" in response_text
-        )
+        ):
+            return False, "Bot detection"
+        else:
+            return True, None
     elif response.status_code == 302:
         target = response.headers.get("Location") or response.headers.get("location") or ""
-        return "Authentication" not in target
+        if "Authentication" not in target:
+            return True, None
+        else:
+            return False, "Authentication required"
     else:
-        return False
+        return False, f"Unexpected status code: {response.status_code}"
 
 
 class SIAKClient:
     DELAY = 5
     TIMEOUT = 5000
 
-    def __init__(self, console: "Console"):
+    def __init__(self, console: "Console", debug: bool = False):
         self._console = console
+        self._debug = debug
+
         self._ssl_context = httpx.create_ssl_context()
         self._ssl_context.set_ciphers("DEFAULT@SECLEVEL=0")
         self._ssl_context.minimum_version = ssl.TLSVersion.TLSv1
@@ -140,10 +148,14 @@ class SIAKClient:
                 print(e)
                 return
 
-            if is_valid_response(resp.result()):
+            check, reason = is_valid_response(resp.result())
+            if check:
                 is_requesting = False
                 [fut.cancel() for fut in futures]
                 response = resp.result()
+            else:
+                if self._debug:
+                    self._console.log(reason)
 
         while is_requesting:
             self._console.log("Requesting", method, url)
