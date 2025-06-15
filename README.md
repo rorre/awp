@@ -15,7 +15,7 @@ uh
 python -m awp --cmd run --config someconfig.yaml
 ```
 
-Config definition can be seen [here](https://github.com/rorre/awp/blob/master/awp/config.py#L14-L26).
+Config definition can be seen [here](https://github.com/rorre/awp/blob/master/awp/config.py#L14-L26). You may want to use kesiangan to generate the config.
 
 ## Notable difference to existing projects
 
